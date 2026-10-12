@@ -36,6 +36,8 @@ const limitText = (limit: Limit, now: number) => {
   const win = WINDOWS[limit.kind]
   if (!win) return []
   const left = limit.resetsAt ? Date.parse(limit.resetsAt) - now : NaN
+  // A remembered window that has reset since shows as fresh until the next reply brings real figures.
+  if (left <= 0) return [`${win.label} ${bar(0)} 0%`]
   const known = Number.isFinite(left)
   const elapsed = known ? Math.min(1, Math.max(0, 1 - left / win.ms)) : undefined
   return [`${win.label} ${bar(limit.percentUsed, elapsed)} ${Math.round(limit.percentUsed)}%${known ? ` ↻${countdown(left)}` : ''}`]
@@ -55,18 +57,39 @@ const taskText = (list: Task[]) => {
   return [`${before}${dots}${after} ${done}/${list.length}`]
 }
 
+// The line is never blank: with no figures yet it shows empty bars, until a reply has shown
+// whether this account has plan limits at all (an API key has none, and then they're dropped).
+let replied = false
+const PLACEHOLDER = [`5h ${bar(0)} –%`, `7d ${bar(0)} –%`]
+
 async function refresh($: EngineInterface) {
   const now = await $.clock.now()
+  const limitParts = (await read($, limits)).flatMap(l => limitText(l, now))
   const parts = [
-    ...(await read($, limits)).flatMap(l => limitText(l, now)),
+    ...(limitParts.length || replied ? limitParts : PLACEHOLDER),
     ...taskText(await read($, tasks)),
   ]
   $.ui.status(parts.length ? parts.join(' | ') : undefined)
 }
 
-async function setLimits($: EngineInterface, list: readonly Limit[]) {
-  await update($, limits, () => list.map(({ kind, percentUsed, resetsAt }) => ({ kind, percentUsed, resetsAt })))
+// Usage figures arrive only with a reply, so a new or resumed session starts with none. Limits are per
+// account, so the last figures any session saw are remembered across sessions and shown until then.
+// Clears first, so an unchanged line still reaches a window that connected after it was set.
+async function resend($: EngineInterface) {
+  $.ui.status(undefined)
   await refresh($)
+}
+
+async function setLimits($: EngineInterface, list: readonly Limit[]) {
+  const clean = list.map(({ kind, percentUsed, resetsAt }) => ({ kind, percentUsed, resetsAt }))
+  await update($, limits, () => clean)
+  if (clean.length) await $.store.set('limits', clean)
+  await refresh($)
+}
+
+async function rememberedLimits($: EngineInterface): Promise<Limit[]> {
+  const saved = await $.store.get('limits')
+  return Array.isArray(saved) ? (saved as Limit[]) : []
 }
 
 async function setTasks($: EngineInterface, fn: (list: Task[]) => Task[]) {
@@ -93,17 +116,34 @@ const passThrough = ($: unknown, e: any, next: (e: any) => any) => next(e)
 
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
-    await setLimits($, (await $.session.usage()).rateLimits)
     $.clock.every(60_000, () => void refresh($)) // keeps the countdowns and pace markers moving
+    // The desktop window may connect a moment after the session starts: send the line again then.
+    $.clock.after(3_000, () => void resend($))
+    try {
+      const fresh = (await $.session.usage()).rateLimits
+      await setLimits($, fresh.length ? fresh : await rememberedLimits($))
+    } catch {
+      await refresh($) // no figures to be had: the placeholder still shows
+    }
 
     return next(e)
-  })
+  }).catch(passThrough)
+
+  // A window connecting later doesn't get a line set before it: send it again.
+  on('session.attach', async ($, e, next) => {
+    const attached = await next(e)
+    await resend($)
+
+    return attached
+  }).catch(passThrough)
 
   on('session.measure', async ($, e, next) => {
-    await setLimits($, e.rateLimits)
+    replied = true
+    if (e.rateLimits.length) await setLimits($, e.rateLimits)
+    else await refresh($)
 
     return next(e)
-  })
+  }).catch(passThrough)
 
   // A new prompt clears a finished task list, so the next goal starts clean.
   on('prompt.submit', async ($, e, next) => {

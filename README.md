@@ -24,7 +24,7 @@ burnline  5h ▰▰▰¦▱▱▱ 29% ↻4h10m | 7d ▰▰▰▰▰¦▱ 49% ↻
 
 The task part appears only while Claude has a task list, which it usually makes for multi-step goals. A finished list is cleared when you send your next prompt, so each new goal starts fresh.
 
-The line refreshes after every reply, whenever a task changes, and once a minute so the countdowns keep moving.
+The line refreshes after every reply, whenever a task changes, and once a minute so the countdowns keep moving. The line is there as soon as a session opens: it shows your last known figures (or empty `–%` bars on a fresh install) until the first reply brings fresh ones.
 
 ## Install
 
@@ -54,7 +54,7 @@ Answer `y` to add the marketplace, then pick a scope (user scope makes it run in
 
 Mods run with your permissions, so here is the full list, as `claude plugin validate` reports it:
 
-- **Calls:** the clock, your session's usage figures, the session's own saved values, and the status line.
+- **Calls:** the clock, your session's usage figures, the session's own saved values, the status line, and Claude Code's plugin storage, where it keeps your last usage figures so a new session can show them before its first reply.
 - **Reads:** your 5-hour and 7-day usage percentages and reset times, and the names and status of Claude's tasks.
 - **No** file access, network requests, programs started, or model calls. Nothing leaves your machine.
 
