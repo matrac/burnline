@@ -1,73 +1,85 @@
 # burnline
 
-A [Claude Code mod](https://code.claude.com/docs/en/plugins/mods/overview) that puts one quiet line next to the model selector, telling you how fast you're burning through your usage limits and how far Claude is through the current task.
+burnline is a [Claude Code mod](https://code.claude.com/docs/en/plugins/mods/overview). It shows one line of text next to the model selector. The line shows how much of your usage limits you use. It also shows the progress of Claude through the current task.
 
 ![burnline in the Claude Code desktop app, next to the model selector](docs/screenshot.png)
 
-The full line, when the window is wide enough:
+This is the full line in a wide window:
 
 ```
 burnline  5h ▰▰▰¦▱▱▱ 29% ↻4h10m | 7d ▰▰▰▰▰¦▱ 49% ↻1h | 8✓ ●●●◉○○○ +6 11/21
 ```
 
-## What it shows
+## What the line shows
 
 | Part | Meaning |
 | --- | --- |
-| `5h ▰▰▰▱▱▱ 29%` | How much of your 5-hour limit is used |
-| `7d ▰▰▰▰▰▱ 49%` | How much of your weekly limit is used |
-| `¦` | How much of that window's time has passed. If the bar fills past it, you're using the limit faster than it refills |
-| `↻4h10m` | Time until that limit resets |
-| `●●●◉○○○` | Claude's task list: done `●`, current `◉`, next `○`, up to seven around the current task |
-| `8✓` / `+6` | Finished tasks before the dots / tasks after them |
-| `11/21` | Tasks done out of the total |
+| `5h ▰▰▰▱▱▱ 29%` | The percentage of your 5-hour limit that you used |
+| `7d ▰▰▰▰▰▱ 49%` | The percentage of your 7-day limit that you used |
+| `¦` | The percentage of the time window that is gone. If the bar is longer than this mark, you use the limit faster than the time goes. |
+| `↻4h10m` | The time until the limit resets |
+| `●●●◉○○○` | The tasks of Claude: `●` is complete, `◉` is in progress, `○` is not started. The line shows a maximum of 7 tasks near the current task. |
+| `8✓` | The number of complete tasks before the dots |
+| `+6` | The number of tasks after the dots |
+| `11/21` | The number of complete tasks and the total number of tasks |
 
-The task part appears only while Claude has a task list, which it usually makes for multi-step goals. A finished list is cleared when you send your next prompt, so each new goal starts fresh.
+The task part shows only when Claude has a task list. Claude usually makes a task list for a goal with many steps. When all tasks are complete, burnline removes the list at your next prompt.
 
-The line refreshes after every reply, whenever a task changes, and once a minute so the countdowns keep moving. The line is there as soon as a session opens: it shows your last known figures (or empty `–%` bars on a fresh install) until the first reply brings fresh ones.
+burnline updates the line after each reply and after each change to a task. It also updates the line one time each minute.
+
+The line shows immediately when a session opens. Before the first reply, the line shows the last known values. If burnline has no values, the bars are empty and show `–%`.
 
 ## Install
 
-In a Claude Code session:
+1. Open a Claude Code session.
+2. Type this command:
 
-```
-/plugin install burnline --marketplace matrac/burnline
-```
+   ```
+   /plugin install burnline --marketplace matrac/burnline
+   ```
 
-Answer `y` to add the marketplace, then pick a scope (user scope makes it run in every session).
+3. Type `y` to add the marketplace.
+4. Select a scope. Use the user scope to use burnline in all sessions.
 
 ## Requirements
 
-- Claude Code **2.1.287 or later** (mods are on by default from that version).
-- The usage bars need a **Claude subscription** (Pro or Max). With an API key there are no plan limits to show, so you'll only see the task dots.
-- Shows in the **terminal** and the **desktop app's Code tab**. The VS Code panel doesn't draw mod output yet.
+- Claude Code 2.1.287 or a later version. Mods are on by default from this version.
+- A Claude subscription (Pro or Max) for the usage bars. An API key has no plan limits. With an API key, the line shows only the tasks.
+- The terminal or the Code tab of the desktop app. The VS Code panel does not show the output of mods.
 
-## Good to know
+## Limits
 
-- The status line is plain text, so there are no colours. The bar characters are the whole design.
-- Claude Code prints the mod's name (`burnline`) in front of the line. A mod can't remove that.
-- In a narrow window, Claude Code cuts the line short with `…`.
-- Per-model weekly limits (Opus vs Sonnet) aren't available to mods, so only the overall 5-hour and 7-day windows are shown.
-- Tasks from subagents and teammates are ignored, so the dots follow the main conversation only.
+- The status line is plain text. It cannot show colors.
+- Claude Code shows the name of the mod (`burnline`) before the line. A mod cannot remove the name.
+- If the window is narrow, Claude Code cuts the line and shows `…`.
+- Mods cannot get the 7-day limits for each model (Opus and Sonnet). The line shows only the total 5-hour and 7-day limits.
+- burnline does not show the tasks of subagents and teammates. The dots show only the tasks of the main conversation.
 
-## What it can reach
+## Access
 
-Mods run with your permissions, so here is the full list, as `claude plugin validate` reports it:
+A mod has the same permissions as you. `claude plugin validate` shows the full list of access for burnline:
 
-- **Calls:** the clock, your session's usage figures, the session's own saved values, the status line, and Claude Code's plugin storage, where it keeps your last usage figures so a new session can show them before its first reply.
-- **Reads:** your 5-hour and 7-day usage percentages and reset times, and the names and status of Claude's tasks.
-- **No** file access, network requests, programs started, or model calls. Nothing leaves your machine.
+- It uses the clock, the usage values of the session, the saved values of the session, and the status line.
+- It uses the plugin storage of Claude Code. burnline keeps the last usage values there. A new session can then show the values before its first reply.
+- It reads your 5-hour and 7-day usage percentages and reset times. It also reads the names and the status of the tasks of Claude.
+- It does not read or write files. It does not use the network. It does not start programs or use a model. No data goes off your computer.
 
-Check it yourself: `claude plugin validate <path to this repo>`.
+To do a check of the access yourself, use this command:
+
+```
+claude plugin validate <path to this repository>
+```
 
 ## Develop
+
+Use these commands to do a check of burnline and to do the tests:
 
 ```
 claude plugin validate .
 claude plugin test .
 ```
 
-The code is one file, [`hooks/register.ts`](hooks/register.ts).
+The code is in one file: [`hooks/register.ts`](hooks/register.ts).
 
 ## License
 
