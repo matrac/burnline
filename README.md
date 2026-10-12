@@ -14,8 +14,8 @@ burnline  5h ▰▰▰¦▱▱▱ 29% ↻4h10m | 7d ▰▰▰▰▰¦▱ 49% ↻
 
 | Part | Meaning |
 | --- | --- |
-| `5h ▰▰▰▱▱▱ 29%` | The percentage of your 5-hour limit that you used |
-| `7d ▰▰▰▰▰▱ 49%` | The percentage of your 7-day limit that you used |
+| <code>5h&nbsp;▰▰▰▱▱▱&nbsp;29%</code> | The percentage of your 5-hour limit that you used |
+| <code>7d&nbsp;▰▰▰▰▰▱&nbsp;49%</code> | The percentage of your 7-day limit that you used |
 | `¦` | The percentage of the time window that is gone. If the bar is longer than this mark, you use the limit faster than the time goes. |
 | `↻4h10m` | The time until the limit resets |
 | `●●●◉○○○` | The tasks of Claude: `●` is complete, `◉` is in progress, `○` is not started. The line shows a maximum of 7 tasks near the current task. |
