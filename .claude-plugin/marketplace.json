@@ -1,0 +1,14 @@
+{
+  "name": "burnline",
+  "description": "burnline: usage limits and task progress in one Claude Code status line",
+  "owner": {
+    "name": "matrac"
+  },
+  "plugins": [
+    {
+      "name": "burnline",
+      "source": "./",
+      "description": "One status line beside the model selector: 5-hour and 7-day usage with pace and reset countdown, plus Claude's task list as milestone dots"
+    }
+  ]
+}
