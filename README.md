@@ -2,6 +2,10 @@
 
 A [Claude Code mod](https://code.claude.com/docs/en/plugins/mods/overview) that puts one quiet line next to the model selector, telling you how fast you're burning through your usage limits and how far Claude is through the current task.
 
+![burnline in the Claude Code desktop app, next to the model selector](docs/screenshot.png)
+
+The full line, when the window is wide enough:
+
 ```
 burnline  5h ▰▰▰¦▱▱▱ 29% ↻4h10m | 7d ▰▰▰▰▰¦▱ 49% ↻1h | 8✓ ●●●◉○○○ +6 11/21
 ```
