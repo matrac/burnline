@@ -7,15 +7,15 @@ burnline is a [Claude Code mod](https://code.claude.com/docs/en/plugins/mods/ove
 This is the full line in a wide window:
 
 ```
-burnline  5h ▰▰▰¦▱▱▱ 29% ↻4h10m | 7d ▰▰▰▰▰¦▱ 49% ↻1h | 8✓ ●●●◉○○○ +6 11/21
+burnline  5h ▰¦▱▱▱▱ 29% ↻4h10m | 7d ▰▰▰▱▱▱▱¦ 49% ↻1h | 8✓ ●●●◉○○○ +6 11/21
 ```
 
 ## What the line shows
 
 | Part | Meaning |
 | --- | --- |
-| <code>5h&nbsp;▰▰▰▱▱▱&nbsp;29%</code> | The percentage of your 5-hour limit that you used |
-| <code>7d&nbsp;▰▰▰▰▰▱&nbsp;49%</code> | The percentage of your 7-day limit that you used |
+| <code>5h&nbsp;▰▱▱▱▱&nbsp;29%</code> | The percentage of your 5-hour limit that you used. One box is one hour. |
+| <code>7d&nbsp;▰▰▰▱▱▱▱&nbsp;49%</code> | The percentage of your 7-day limit that you used. One box is one day. |
 | `¦` | The percentage of the time window that is gone. If the bar is longer than this mark, you use the limit faster than the time goes. |
 | `↻4h10m` | The time until the limit resets |
 | `●●●◉○○○` | The tasks of Claude: `●` is complete, `◉` is in progress, `○` is not started. The line shows a maximum of 7 tasks near the current task. |

@@ -2,7 +2,7 @@ import { expect, mock, test } from 'claude-code/testing'
 
 // Answers the engine nouns beneath the mod and records the last status line it set.
 // No reply has come in a test, so the line starts with the empty-bar placeholder.
-const EMPTY = '5h ▱▱▱▱▱▱ –% | 7d ▱▱▱▱▱▱ –% | '
+const EMPTY = '5h ▱▱▱▱▱ –% | 7d ▱▱▱▱▱▱▱ –% | '
 const harness = (on: any) => {
   const seen = { line: undefined as string | undefined }
   mock.clock(on, { now: Date.parse('2026-10-03T10:00:00Z') })

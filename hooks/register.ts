@@ -4,18 +4,18 @@ import type { EngineInterface, Register } from 'claude-code'
 import type { Limit, Task, TaskStatus } from '../types'
 
 // One plain-text line beside the model selector (the status line renders no markup):
-//   5h ▰▰▰¦▱▱▱ 29% ↻4h10m | 7d ▰▰▰▰▰¦▱ 49% ↻1h | 8✓ ●●●◉○○○ +6 11/21
+//   5h ▰¦▱▱▱▱ 29% ↻4h10m | 7d ▰▰▰▱▱▱▱¦ 49% ↻1h | 8✓ ●●●◉○○○ +6 11/21
 // Bars: share of the 5-hour / 7-day limit used; ¦ marks how much of the window has passed.
 // Dots: Claude's task list, done ● / current ◉ / next ○, at most seven around the current one.
 
 const limits = atom({ plugin: 'burnline', key: 'limits' } as const, [])
 const tasks = atom({ plugin: 'burnline', key: 'tasks' } as const, [])
 
-const WINDOWS: Record<string, { label: string; ms: number }> = {
-  five_hour: { label: '5h', ms: 5 * 3600_000 },
-  seven_day: { label: '7d', ms: 7 * 86400_000 },
+// One box per hour of the 5-hour window, one per day of the 7-day window.
+const WINDOWS: Record<string, { label: string; ms: number; cells: number }> = {
+  five_hour: { label: '5h', ms: 5 * 3600_000, cells: 5 },
+  seven_day: { label: '7d', ms: 7 * 86400_000, cells: 7 },
 }
-const CELLS = 6
 const DOTS = 7
 
 const countdown = (ms: number) => {
@@ -25,10 +25,10 @@ const countdown = (ms: number) => {
   return `${Math.floor(m / 1440)}d${Math.floor((m % 1440) / 60)}h`
 }
 
-const bar = (pct: number, elapsed?: number) => {
-  const filled = Math.round((Math.min(100, Math.max(0, pct)) / 100) * CELLS)
-  const cells = [...'▰'.repeat(filled) + '▱'.repeat(CELLS - filled)]
-  if (elapsed !== undefined) cells.splice(Math.round(elapsed * CELLS), 0, '¦')
+const bar = (size: number, pct: number, elapsed?: number) => {
+  const filled = Math.round((Math.min(100, Math.max(0, pct)) / 100) * size)
+  const cells = [...'▰'.repeat(filled) + '▱'.repeat(size - filled)]
+  if (elapsed !== undefined) cells.splice(Math.round(elapsed * size), 0, '¦')
   return cells.join('')
 }
 
@@ -37,10 +37,10 @@ const limitText = (limit: Limit, now: number) => {
   if (!win) return []
   const left = limit.resetsAt ? Date.parse(limit.resetsAt) - now : NaN
   // A remembered window that has reset since shows as fresh until the next reply brings real figures.
-  if (left <= 0) return [`${win.label} ${bar(0)} 0%`]
+  if (left <= 0) return [`${win.label} ${bar(win.cells, 0)} 0%`]
   const known = Number.isFinite(left)
   const elapsed = known ? Math.min(1, Math.max(0, 1 - left / win.ms)) : undefined
-  return [`${win.label} ${bar(limit.percentUsed, elapsed)} ${Math.round(limit.percentUsed)}%${known ? ` ↻${countdown(left)}` : ''}`]
+  return [`${win.label} ${bar(win.cells, limit.percentUsed, elapsed)} ${Math.round(limit.percentUsed)}%${known ? ` ↻${countdown(left)}` : ''}`]
 }
 
 const taskText = (list: Task[]) => {
@@ -60,7 +60,7 @@ const taskText = (list: Task[]) => {
 // The line is never blank: with no figures yet it shows empty bars, until a reply has shown
 // whether this account has plan limits at all (an API key has none, and then they're dropped).
 let replied = false
-const PLACEHOLDER = [`5h ${bar(0)} –%`, `7d ${bar(0)} –%`]
+const PLACEHOLDER = [`5h ${bar(5, 0)} –%`, `7d ${bar(7, 0)} –%`]
 
 async function refresh($: EngineInterface) {
   const now = await $.clock.now()
