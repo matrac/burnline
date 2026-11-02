@@ -25,22 +25,33 @@ const countdown = (ms: number) => {
   return `${Math.floor(m / 1440)}d${Math.floor((m % 1440) / 60)}h`
 }
 
-const bar = (size: number, pct: number, elapsed?: number) => {
+// `group` > 0 puts a thin space between every `group` boxes (one day each in the doubled 7-day bar);
+// where the pace marker falls on such a boundary, the marker is the separator.
+const bar = (size: number, pct: number, elapsed?: number, group = 0) => {
   const filled = Math.round((Math.min(100, Math.max(0, pct)) / 100) * size)
-  const cells = [...'▰'.repeat(filled) + '▱'.repeat(size - filled)]
-  if (elapsed !== undefined) cells.splice(Math.round(elapsed * size), 0, '¦')
-  return cells.join('')
+  const mark = elapsed === undefined ? -1 : Math.round(elapsed * size)
+  let out = ''
+  for (let i = 0; i <= size; i++) {
+    if (i === mark) out += '¦'
+    if (i === size) break
+    if (group && i > 0 && i % group === 0 && i !== mark) out += ' '
+    out += i < filled ? '▰' : '▱'
+  }
+  return out
 }
 
-const limitText = (limit: Limit, now: number) => {
+// Without a 5-hour window the 7-day bar takes its room: two boxes per day.
+const limitText = (limit: Limit, now: number, double = false) => {
   const win = WINDOWS[limit.kind]
   if (!win) return []
+  const size = double ? win.cells * 2 : win.cells
+  const group = double ? 2 : 0
   const left = limit.resetsAt ? Date.parse(limit.resetsAt) - now : NaN
   // A remembered window that has reset since shows as fresh until the next reply brings real figures.
-  if (left <= 0) return [`${win.label} ${bar(win.cells, 0)} 0%`]
+  if (left <= 0) return [`${win.label} ${bar(size, 0, undefined, group)} 0%`]
   const known = Number.isFinite(left)
   const elapsed = known ? Math.min(1, Math.max(0, 1 - left / win.ms)) : undefined
-  return [`${win.label} ${bar(win.cells, limit.percentUsed, elapsed)} ${Math.round(limit.percentUsed)}%${known ? ` ↻${countdown(left)}` : ''}`]
+  return [`${win.label} ${bar(size, limit.percentUsed, elapsed, group)} ${Math.round(limit.percentUsed)}%${known ? ` ↻${countdown(left)}` : ''}`]
 }
 
 const taskText = (list: Task[]) => {
@@ -64,7 +75,9 @@ const PLACEHOLDER = [`5h ${bar(5, 0)} –%`, `7d ${bar(7, 0)} –%`]
 
 async function refresh($: EngineInterface) {
   const now = await $.clock.now()
-  const limitParts = (await read($, limits)).flatMap(l => limitText(l, now))
+  const list = await read($, limits)
+  const noFiveHour = list.length > 0 && !list.some(l => l.kind === 'five_hour')
+  const limitParts = list.flatMap(l => limitText(l, now, noFiveHour && l.kind === 'seven_day'))
   const parts = [
     ...(limitParts.length || replied ? limitParts : PLACEHOLDER),
     ...taskText(await read($, tasks)),

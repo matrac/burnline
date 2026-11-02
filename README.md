@@ -29,6 +29,18 @@ burnline updates the line after each reply and after each change to a task. It a
 
 The line shows immediately when a session opens. Before the first reply, the line shows the last known values. If burnline has no values, the bars are empty and show `–%`.
 
+### If you have no 5-hour limit
+
+Some accounts have no 5-hour limit. Then the line shows only the 7-day bar. The 7-day bar then has 14 boxes: 2 boxes for each day. A small space separates the days.
+
+![burnline with no 5-hour limit: one 7-day bar with 14 boxes](docs/screenshot-no-5h.png)
+
+```
+burnline  7d ▰▱ ▱▱¦▱▱ ▱▱ ▱▱ ▱▱ ▱▱ 6% ↻5d5h
+```
+
+If the 5-hour limit comes back, burnline shows the two bars again.
+
 ## Install
 
 1. Open a Claude Code session.
